@@ -1,0 +1,44 @@
+# SPDX-License-Identifier: BSD-2-Clause
+# OCEOS Unity Test Builder Configuration
+
+# Copyright (C) 2025 Trinity College Dublin (www.tcd.ie)
+#               Andrew Butterfield
+#               Rokas Paulauskas
+#
+# Configuration for OCEOS formal testing framework
+# All paths should be absolute
+
+spin2test: C:\Users\rokas\OneDrive\Desktop\developer\dissertation\Project\/spin2test_oceos.py
+modelsfile: C:\Users\rokas\OneDrive\Desktop\developer\dissertation\Project\/models/models.yml
+oceos: C:\Users\rokas\OneDrive\Desktop\developer\dissertation\Project\/  # Use project directory as OCEOS root
+test_runner: C:\Users\rokas\OneDrive\Desktop\developer\dissertation\Project\tests\unity_runner  # Unity test runner
+testyamldir: C:\Users\rokas\OneDrive\Desktop\developer\dissertation\Project\tests\config\  # Directory containing test configuration
+testcode: C:\Users\rokas\OneDrive\Desktop\developer\dissertation\Project\tests\unity\  # Directory for Unity test files
+testexedir: C:\Users\rokas\OneDrive\Desktop\developer\dissertation\Project\build\tests\  # Directory containing test executables
+testsuite: oceos-model-0
+test_args: --verbose --output-xml  # Arguments for test runner
+spinallscenarios: -DTEST_GEN -run -E -c0 -e  # SPIN trail generation flags
+
+# OCEOS-specific settings aligned with OCEOS test structure
+unity_framework: C:\Users\rokas\OneDrive\Desktop\developer\dissertation\oceos\test\unity\src/
+oceos_include: C:\Users\rokas\OneDrive\Desktop\developer\dissertation\oceos\src\include/
+target_platform: pm698  # OCEOS BSP (pm698, gr712rc, etc.)
+build_system: make  # make-based orchestration as advised
+toolchain: bcc-gcc  # BCC2 SPARC Gaisler compiler
+
+# BCC2 SPARC compiler configuration
+bcc_root: C:/opt/bcc-2.2.0-gcc  # Windows default, adjust for Linux
+sparc_enabled: true
+cross_prefix: sparc-gaisler-elf-
+
+# OCEOS test build command pattern (matching provided example)
+# "make test_build_only BSP=pm698 SPARC=1 TOOLCHAIN=gcc"
+build_command: "make test_build_only BSP={bsp} SPARC=1 TOOLCHAIN=gcc"
+test_command: "make oceos_test BSP={bsp} SPARC=1 TOOLCHAIN=gcc"
+
+# Test configuration
+enable_coverage: true
+test_timeout: 30  # seconds
+memory_model: full  # or minimal
+debug_level: 2
+use_annotations: true  # Enable @@@ printf statements

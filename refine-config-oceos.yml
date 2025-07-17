@@ -1,0 +1,292 @@
+# SPDX-License-Identifier: BSD-2-Clause
+# OCEOS Task Manager: Promela to Unity Test Refinement
+
+# Copyright (C) 2025 Trinity College Dublin (www.tcd.ie)
+
+# Template configuration for OCEOS Unity test generation
+testfiletype: .c
+refinefile: ../../refine-config-oceos.yml
+
+# Model-specific template files  
+preamble: tc-task-mgr-pre.h
+postamble: tc-task-mgr-post.h
+runfile: tc-task-mgr-run.h
+
+# Test case templates (same as above for now)
+testcase_preamble: tc-task-mgr-pre.h
+testcase_postamble: tc-task-mgr-post.h
+testcase_runfile: tc-task-mgr-run.h
+
+LANGUAGE: C
+
+SEGNAMEPFX: TestSegment{} # segnumber
+SEGARG: void
+SEGDECL: static void {}(void)  # segnamepf{segnumber}
+SEGBEGIN: " {"
+SEGEND: "}"
+
+NAME: |
+  /* Test Name is defined in the Unity Test Case code */
+
+# OCEOS-specific variable declarations
+task_id_DCL: unsigned int {0}[OCEOS_TASK_MAX];
+
+semaphore_id_DCL: unsigned int {0}[OCEOS_SEM_MAX];
+
+result_DCL: enum DIRECTIVE_STATUS
+
+createRC_DCL: enum DIRECTIVE_STATUS
+
+startRC_DCL: enum DIRECTIVE_STATUS
+
+deleteRC_DCL: enum DIRECTIVE_STATUS
+
+suspendRC_DCL: enum DIRECTIVE_STATUS
+
+resumeRC_DCL: enum DIRECTIVE_STATUS
+
+priority_DCL: unsigned char
+
+threshold_DCL: unsigned char
+
+# Unity test setup and initialization
+INIT: |
+  // Initialize OCEOS system for testing
+  init_meta_ptr = (struct init_fixed_meta *) &test_fixed_meta[0];
+  init_meta_ptr->init_meta_set_up = 1;
+  init_meta_ptr->tasks_count = OCEOS_TASK_MAX;
+  sysMetaPtr = (struct systemFixedMeta *) &test_system_meta[0];
+  sysMetaPtr->data_fixed_ptr = (U32_t *) &test_version_array[0];
+  sysMetaPtr->tasksFixedPtr = (struct taskFixedBlock *) &test_tasks_fixed[0];
+  
+  // Clear task IDs
+  for (int i = 0; i < OCEOS_TASK_MAX; i++) {
+      task_id[i] = 0;
+  }
+  
+  // Clear semaphore IDs  
+  for (int i = 0; i < OCEOS_SEM_MAX; i++) {
+      semaphore_id[i] = 0;
+  }
+
+TASK_INIT: |
+  // Unity test case initialization
+  setUp();
+
+# OCEOS API call mappings for Unity tests with @@@ annotations
+oceos_task_create: |
+  // @@@ {0} CALL oceos_task_create {0} {1} {2} {3} {4}
+  printf("@@@ %d CALL oceos_task_create %u %u %u %u %s\n", _pid, {0}, {1}, {2}, {3}, {4} ? "true" : "false");
+  {5} = oceos_task_create({0}, {1}, {2}, {3}, {4}, TRUE, test_task_function, test_task_end, 1000, 500);
+  printf("@@@ %d SCALAR {5} %d\n", _pid, {5});
+  
+oceos_task_start: |
+  // @@@ {0} CALL oceos_task_start {0}
+  printf("@@@ %d CALL oceos_task_start %u\n", _pid, {0});
+  {1} = oceos_task_start({0});
+  printf("@@@ %d SCALAR {1} %d\n", _pid, {1});
+
+oceos_task_delete: |
+  // @@@ {0} CALL oceos_task_delete {0}
+  printf("@@@ %d CALL oceos_task_delete %u\n", _pid, {0});
+  {1} = oceos_task_delete({0});
+  printf("@@@ %d SCALAR {1} %d\n", _pid, {1});
+
+oceos_task_suspend: |
+  // @@@ {0} CALL oceos_task_suspend {0}
+  printf("@@@ %d CALL oceos_task_suspend %u\n", _pid, {0});
+  {1} = oceos_task_suspend({0});
+  printf("@@@ %d SCALAR {1} %d\n", _pid, {1});
+
+oceos_task_resume: |
+  // @@@ {0} CALL oceos_task_resume {0}
+  printf("@@@ %d CALL oceos_task_resume %u\n", _pid, {0});
+  {1} = oceos_task_resume({0});
+  printf("@@@ %d SCALAR {1} %d\n", _pid, {1});
+
+oceos_sem_create: |
+  // @@@ {0} CALL oceos_sem_create {0} {1}
+  printf("@@@ %d CALL oceos_sem_create %u %u\n", _pid, {0}, {1});
+  {2} = oceos_sem_create({0}, {1});
+  printf("@@@ %d SCALAR {2} %d\n", _pid, {2});
+
+oceos_sem_wait: |
+  // Waiting on OCEOS semaphore: ID={0}
+  {1} = oceos_sem_wait({0});
+
+oceos_sem_post: |
+  // Posting to OCEOS semaphore: ID={0}
+  {1} = oceos_sem_post({0});
+
+# Unity assertions for OCEOS return codes with @@@ annotations
+createRC: |
+  printf("@@@ %d SCALAR createRC %d\n", _pid, createRC);
+  TEST_ASSERT_EQUAL_MESSAGE({0}, createRC, "Task creation return code");
+
+startRC: |
+  printf("@@@ %d SCALAR startRC %d\n", _pid, startRC);
+  TEST_ASSERT_EQUAL_MESSAGE({0}, startRC, "Task start return code");
+
+deleteRC: |
+  printf("@@@ %d SCALAR deleteRC %d\n", _pid, deleteRC);
+  TEST_ASSERT_EQUAL_MESSAGE({0}, deleteRC, "Task delete return code");
+
+suspendRC: |
+  printf("@@@ %d SCALAR suspendRC %d\n", _pid, suspendRC);
+  TEST_ASSERT_EQUAL_MESSAGE({0}, suspendRC, "Task suspend return code");
+
+resumeRC: |
+  printf("@@@ %d SCALAR resumeRC %d\n", _pid, resumeRC);
+  TEST_ASSERT_EQUAL_MESSAGE({0}, resumeRC, "Task resume return code");
+
+# OCEOS directive status checks
+SUCCESSFUL: |
+  TEST_ASSERT_EQUAL_MESSAGE(SUCCESSFUL, result, "Operation should succeed");
+
+INVALID_ID: |
+  TEST_ASSERT_EQUAL_MESSAGE(INVALID_ID, result, "Should return INVALID_ID");
+
+INVALID_NAME: |
+  TEST_ASSERT_EQUAL_MESSAGE(INVALID_NAME, result, "Should return INVALID_NAME");
+
+TOO_MANY: |
+  TEST_ASSERT_EQUAL_MESSAGE(TOO_MANY, result, "Should return TOO_MANY");
+
+INCORRECT_STATE: |
+  TEST_ASSERT_EQUAL_MESSAGE(INCORRECT_STATE, result, "Should return INCORRECT_STATE");
+
+INTERNAL_ERROR: |
+  TEST_ASSERT_EQUAL_MESSAGE(INTERNAL_ERROR, result, "Should return INTERNAL_ERROR");
+
+# Task state checks (adapted for OCEOS)
+Ready: |
+  // Verify task {0} is in Ready state
+  TEST_ASSERT_MESSAGE(task_is_ready({0}), "Task should be ready");
+
+Zombie: |
+  // Verify task {0} has terminated
+  TEST_ASSERT_MESSAGE(task_is_terminated({0}), "Task should be terminated");
+
+Suspended: |
+  // Verify task {0} is suspended
+  TEST_ASSERT_MESSAGE(task_is_suspended({0}), "Task should be suspended");
+
+# Priority management
+LowerPriority: |
+  // Set lower priority for current task
+  result = oceos_task_set_priority(OCEOS_SELF, LOW_PRIORITY);
+  TEST_ASSERT_EQUAL(SUCCESSFUL, result);
+
+EqualPriority: |
+  // Set normal priority for current task  
+  result = oceos_task_set_priority(OCEOS_SELF, NORMAL_PRIORITY);
+  TEST_ASSERT_EQUAL(SUCCESSFUL, result);
+
+HigherPriority: |
+  // Set higher priority for current task
+  result = oceos_task_set_priority(OCEOS_SELF, HIGH_PRIORITY);
+  TEST_ASSERT_EQUAL(SUCCESSFUL, result);
+
+# Timing and synchronization
+SIGNAL: |
+  // Signal semaphore {0}
+  result = oceos_sem_post(semaphore_id[{0}]);
+  TEST_ASSERT_EQUAL(SUCCESSFUL, result);
+
+WAIT: |
+  // Wait on semaphore {0}
+  result = oceos_sem_wait(semaphore_id[{0}]);
+  TEST_ASSERT_EQUAL(SUCCESSFUL, result);
+
+# System state checks
+SystemRunning: |
+  // Verify OCEOS system is running
+  TEST_ASSERT_MESSAGE(oceos_system_is_running(), "OCEOS system should be running");
+
+SystemIdle: |
+  // Verify OCEOS system is idle
+  TEST_ASSERT_MESSAGE(oceos_system_is_idle(), "OCEOS system should be idle");
+
+# New assertion patterns for comprehensive API testing
+ASSERT_EQ: |
+  // Assert equality with descriptive message
+  TEST_ASSERT_EQUAL_MESSAGE({0}, {1}, "Expected {2} condition");
+
+SCENARIO: |
+  // Test scenario marker: {0}
+  printf("@@@ TEST_SCENARIO {0}\n");
+
+InvalidTaskID: |
+  // Test invalid task ID handling
+  TEST_ASSERT_EQUAL_MESSAGE(INVALID_ID, {0}, "Invalid task ID should return INVALID_ID error");
+
+BoundaryPriority: |
+  // Test boundary priority values
+  TEST_ASSERT_EQUAL_MESSAGE(SUCCESSFUL, {0}, "Boundary priority should be accepted");
+
+ResourceExhaustion: |
+  // Test resource exhaustion handling
+  TEST_ASSERT_EQUAL_MESSAGE(TOO_MANY, {0}, "Resource exhaustion should return TOO_MANY error");
+
+SuspendNonExistent: |
+  // Test suspend of non-existent task
+  TEST_ASSERT_EQUAL_MESSAGE(INVALID_ID, {0}, "Suspending non-existent task should return INVALID_ID");
+
+IncorrectState: |
+  // Test incorrect task state operations
+  TEST_ASSERT_EQUAL_MESSAGE(INCORRECT_STATE, {0}, "Operation on incorrect state should return INCORRECT_STATE");
+
+PriorityInvalid: |
+  // Test invalid priority handling
+  TEST_ASSERT_EQUAL_MESSAGE(INVALID_PRIORITY, {0}, "Invalid priority should return INVALID_PRIORITY error");
+
+# Variable declarations for new test scenarios
+invalid_rc_DCL: enum DIRECTIVE_STATUS invalid_rc;
+boundary_rc_DCL: enum DIRECTIVE_STATUS boundary_rc;
+exhaust_rc_DCL: enum DIRECTIVE_STATUS exhaust_rc;
+suspend_rc_DCL: enum DIRECTIVE_STATUS suspend_rc;
+task_count_DCL: unsigned char task_count;
+state_rc_DCL: enum DIRECTIVE_STATUS state_rc;
+prio_rc_DCL: enum DIRECTIVE_STATUS prio_rc;
+test_task_id_DCL: unsigned char test_task_id;
+
+# Additional API test patterns for comprehensive coverage
+TaskCreated: |
+  // Task creation successful
+  TEST_ASSERT_EQUAL_MESSAGE(SUCCESSFUL, {0}, "Task creation should succeed");
+
+TaskStarted: |
+  // Task start successful
+  TEST_ASSERT_EQUAL_MESSAGE(SUCCESSFUL, {0}, "Task start should succeed");
+
+TaskSuspended: |
+  // Task suspend successful
+  TEST_ASSERT_EQUAL_MESSAGE(SUCCESSFUL, {0}, "Task suspend should succeed");
+
+TaskResumed: |
+  // Task resume successful
+  TEST_ASSERT_EQUAL_MESSAGE(SUCCESSFUL, {0}, "Task resume should succeed");
+
+TaskDeleted: |
+  // Task deletion successful
+  TEST_ASSERT_EQUAL_MESSAGE(SUCCESSFUL, {0}, "Task deletion should succeed");
+
+TaskStateTransitions: |
+  // Complete task state transition test
+  printf("@@@ TEST_SCENARIO TaskStateTransitions\n");
+
+PriorityValidation: |
+  // Priority validation test
+  printf("@@@ TEST_SCENARIO PriorityValidation\n");
+
+Successful: |
+  // General successful operation
+  TEST_ASSERT_EQUAL_MESSAGE(SUCCESSFUL, {0}, "Operation should succeed");
+
+TooMany: |
+  // Too many resources error
+  TEST_ASSERT_EQUAL_MESSAGE(TOO_MANY, {0}, "Should return TOO_MANY error when resources exhausted");
+
+InvalidID: |
+  // Invalid ID error
+  TEST_ASSERT_EQUAL_MESSAGE(INVALID_ID, {0}, "Should return INVALID_ID error for invalid identifier");
