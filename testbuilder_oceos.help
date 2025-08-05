@@ -1,0 +1,158 @@
+OCEOS Unity Test Builder Help
+============================
+
+NAME
+    testbuilder_oceos.py - Generate Unity tests from OCEOS Promela models
+
+SYNOPSIS
+    testbuilder_oceos.py COMMAND [MODEL_NAME]
+
+DESCRIPTION
+    The OCEOS Unity Test Builder generates formal tests for OCEOS components
+    using SPIN model checking and Unity test framework. It converts Promela
+    models into executable Unity test code.
+
+COMMANDS
+    help
+        Display this help message.
+
+    allsteps MODEL_NAME
+        Run the complete test generation pipeline for the specified model:
+        1. Clean old artifacts
+        2. Generate SPIN trails from Promela model
+        3. Convert trails to Unity test code
+        4. Copy tests to OCEOS test directory
+        5. Compile OCEOS with tests
+        6. Run tests
+
+    spin MODEL_NAME
+        Generate SPIN trails from the Promela model.
+        Creates .trail and .spn files containing execution traces.
+
+    gentests MODEL_NAME
+        Generate Unity test code from existing SPIN trails.
+        Creates .c files with Unity test functions.
+
+    copy MODEL_NAME
+        Copy generated Unity test files to OCEOS test directory.
+        Updates test configuration.
+
+    clean MODEL_NAME
+        Remove all generated files for the specified model.
+        Cleans .trail, .spn, and test .c files.
+
+    archive MODEL_NAME
+        Archive generated files with timestamp.
+        Useful for keeping test generations.
+
+    compile
+        Compile OCEOS with Unity tests using configured build system.
+
+    run
+        Execute the compiled Unity tests and capture results.
+
+    standalone [MODEL_NAME]
+        Generate standalone Unity tests for SPARC hardware deployment.
+        Creates individual test executables suitable for dmon loading.
+        If MODEL_NAME is specified, generates tests only for that model.
+        Otherwise, generates tests for all models.
+        
+        Generated tests are self-contained and include:
+        - Complete Unity test structure with main()
+        - OCEOS API stubs for linking
+        - Hardware-specific initialization
+        - Individual .exe files for each test scenario
+        
+        Use 'make standalone' to build the generated tests.
+        Use 'make dmon-scripts' to create dmon loading scripts.
+
+    run
+        Execute Unity tests using configured test runner.
+
+    zero [MODEL_NAME]
+        Reset test configuration to minimal state.
+
+MODEL NAMES
+    Available models are defined in models/models.yml:
+    
+    task-mgr        - Task management tests
+    event-mgr       - Event management tests  
+    sem-mgr         - Semaphore management tests
+    queue-mgr       - Queue management tests
+    timer-mgr       - Timer management tests
+    system-mgr      - System management tests
+    
+    allmodels       - Process all available models
+
+CONFIGURATION
+    testbuilder_oceos.yml - Main configuration file
+    refine-config-oceos.yml - Promela to Unity refinement mappings
+    
+    Key configuration items:
+    - spin2test: Path to SPIN to Unity converter
+    - modelsfile: Path to models registry
+    - oceos: Path to OCEOS source directory
+    - unity_framework: Path to Unity framework
+    - target_platform: Target platform (sparc-leon3, arm-cortex-m4)
+
+EXAMPLES
+    # Generate tests for task management
+    python3 testbuilder_oceos.py allsteps task-mgr
+    
+    # Generate tests for all models
+    python3 testbuilder_oceos.py allsteps allmodels
+    
+    # Just generate SPIN trails
+    python3 testbuilder_oceos.py spin task-mgr
+    
+    # Clean task management artifacts
+    python3 testbuilder_oceos.py clean task-mgr
+    
+    # Archive current generation
+    python3 testbuilder_oceos.py archive task-mgr
+
+WORKFLOW
+    1. Write Promela model in models/MODEL_NAME/MODEL_NAME-model.pml
+    2. Define refinements in models/MODEL_NAME/MODEL_NAME-rfn.yml
+    3. Register model in models/models.yml
+    4. Run: python3 testbuilder_oceos.py allsteps MODEL_NAME
+    5. Unity tests are generated in tests/unity/
+    6. Tests are automatically compiled and run
+
+FILES
+    testbuilder_oceos.py      - Main script
+    spin2test_oceos.py        - SPIN to Unity converter
+    testbuilder_oceos.yml     - Configuration
+    refine-config-oceos.yml   - Refinement mappings
+    models/models.yml         - Model registry
+    models/*/                 - Individual model directories
+    tests/unity/              - Generated Unity tests
+    common/                   - Common support files
+
+REQUIREMENTS
+    - Python 3.7+
+    - PyYAML
+    - SPIN model checker
+    - Unity test framework
+    - OCEOS source code
+    - Appropriate cross-compilation toolchain
+
+ENVIRONMENT VARIABLES
+    OCEOS_ROOT              - Path to OCEOS source
+    UNITY_ROOT              - Path to Unity framework
+    SPIN_ROOT               - Path to SPIN installation
+
+EXIT STATUS
+    0    Success
+    1    Error in execution
+    2    Configuration error
+    3    Model not found
+    4    Tool dependency missing
+
+AUTHOR
+    Adapted from RTEMS testbuilder.py for OCEOS
+    Trinity College Dublin (www.tcd.ie)
+
+SEE ALSO
+    make(1), spin(1), unity documentation
+    README.md for detailed usage guide

@@ -1,0 +1,7 @@
+# SPDX-License-Identifier: BSD-2-Clause
+# OCEOS Formal Models Registry
+#
+# Registry of available OCEOS Promela models for formal testing
+# Format: model-name: path/to/model
+
+task-mgr: task-mgr/oceos-task-mgr-model
