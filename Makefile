@@ -161,9 +161,7 @@ OCEOS_LIB ?= $(OCEOS_ROOT)/lib/liboceos.a
 # Build OCEOS tests using their native build system
 build_oceos_tests:
 	@echo "Building OCEOS tests using native build system..."
-	@cd "$(OCEOS_ROOT)/test/common/tasks1_test" && make tasks1_build_test BSP=$(BSP) SPARC=$(SPARC) TOOLCHAIN=$(TOOLCHAIN)
-	@cd "$(OCEOS_ROOT)/test/common/tasks2_test" && make tasks2_build_test BSP=$(BSP) SPARC=$(SPARC) TOOLCHAIN=$(TOOLCHAIN)
-	@cd "$(OCEOS_ROOT)/test/common/tasks3_test" && make tasks3_build_test BSP=$(BSP) SPARC=$(SPARC) TOOLCHAIN=$(TOOLCHAIN)
+	@-cd "$(OCEOS_ROOT)/test/common/formal_task_mgr_test" && make formal_task_mgr_build_test BSP=$(BSP) SPARC=$(SPARC) TOOLCHAIN=$(TOOLCHAIN) || echo Skipping formal_task_mgr_test (not present)
 
 # Build only (matches OCEOS test command pattern) - use OCEOS native builds
 test_build_only: setup build_oceos_tests

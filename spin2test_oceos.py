@@ -1,45 +1,52 @@
 # SPDX-License-Identifier: BSD-2-Clause
-"""SPIN trace to OCEOS Unity test converter"""
-
-# Copyright (C) 2025 Trinity College Dublin (www.tcd.ie)
-#
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions
-# are met:
-# 1. Redistributions of source code must retain the above copyright
-#    notice, this list of conditions and the following disclaimer.
-# 2. Redistributions in binary form must reproduce the above copyright
-#    notice, this list of conditions and the following disclaimer in the
-#    documentation and/or other materials provided with the distribution.
-#
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
-# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-# POSSIBILITY OF SUCH DAMAGE.
-
-import src.spin2test_oceos
+"""SPIN trace to OCEOS Unity test converter CLI and generator glue"""
 
 import argparse
+import sys
+from pathlib import Path
 
-if __name__ == '__main__':
-    claparser = argparse.ArgumentParser(
-        description="Promela to OCEOS Unity Test Generator")
-    claparser.add_argument("root", help="Model filename root")
-    claparser.add_argument("pre_amble", help="Model pre-amble file")
-    claparser.add_argument("post_amble", help="Model post-amble file")
-    claparser.add_argument("run", help="Model test run file")
-    claparser.add_argument("refine", help="Model test refine file")
-    claparser.add_argument("testfile", help="Model helper file")
-    claparser.add_argument("tstno", help="Model test number")
+# Ensure 'src' is on sys.path for package imports
+ROOT = Path(__file__).resolve().parent
+SRC_DIR = ROOT / "src"
+if str(SRC_DIR) not in sys.path:
+    sys.path.insert(0, str(SRC_DIR))
 
-    cl_args = claparser.parse_args()
-    src.spin2test_oceos.main(cl_args.tstno, '', cl_args.root, cl_args.pre_amble,
-                       cl_args.post_amble, cl_args.run, cl_args.refine,
-                       cl_args.testfile)
+from spin2test_oceos import OceosUnityGenerator  # type: ignore
+
+
+def parse_args(argv: list[str]) -> argparse.Namespace:
+    p = argparse.ArgumentParser(description="Promela to OCEOS Unity Test Generator")
+    p.add_argument("model_root", help="Model filename root (e.g., oceos-task-mgr-model)")
+    p.add_argument("preamble", help="Path to preamble header")
+    p.add_argument("postamble", help="Path to postamble header")
+    p.add_argument("runfile", help="Path to runfile header")
+    p.add_argument("refine", help="Path to refine-config YAML")
+    p.add_argument("output", help="Output Unity C file path")
+    p.add_argument("--spin-trace", required=True, help="Path to SPIN .spn trace file")
+    p.add_argument("--test-number", default="0", help="Test number / trail index")
+    return p.parse_args(argv)
+
+
+def main(argv: list[str]) -> int:
+    ns = parse_args(argv)
+
+    gen = OceosUnityGenerator(
+        model_root=ns.model_root,
+        preamble_file=ns.preamble,
+        postamble_file=ns.postamble,
+        run_file=ns.runfile,
+        refine_file=ns.refine,
+    )
+
+    gen.generate_test(
+        test_number=int(ns.test_number),
+        output_file=ns.output,
+        spin_trace_path=ns.spin_trace,
+    )
+
+    print(f"Generated Unity test: {ns.output}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main(sys.argv[1:]))

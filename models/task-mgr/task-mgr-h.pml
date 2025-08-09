@@ -63,7 +63,7 @@ inline initTasks() {
         tasks[i].state = Dormant;
         task_priority[i] = 0;
         task_threshold[i] = 0;
-        task_id[i] = 0;
+        task_ids[i] = 0;
         task_enabled[i] = false;
         task_suspended[i] = false;
         task_created[i] = false;

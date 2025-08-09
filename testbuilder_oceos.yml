@@ -10,7 +10,7 @@
 
 spin2test: C:\Users\rokas\OneDrive\Desktop\developer\dissertation\Project\/spin2test_oceos.py
 modelsfile: C:\Users\rokas\OneDrive\Desktop\developer\dissertation\Project\/models/models.yml
-oceos: C:\Users\rokas\OneDrive\Desktop\developer\dissertation\Project\/  # Use project directory as OCEOS root
+oceos: C:\Users\rokas\OneDrive\Desktop\developer\dissertation\oceos  # Use OCEOS repo root
 test_runner: C:\Users\rokas\OneDrive\Desktop\developer\dissertation\Project\tests\unity_runner  # Unity test runner
 testyamldir: C:\Users\rokas\OneDrive\Desktop\developer\dissertation\Project\tests\config\  # Directory containing test configuration
 testcode: C:\Users\rokas\OneDrive\Desktop\developer\dissertation\Project\tests\unity\  # Directory for Unity test files
